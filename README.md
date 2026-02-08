@@ -276,7 +276,7 @@ This project demonstrates proficiency in:
 
 ## 👤 Author
 
-**Your Name**  
+**Parth Kotadiya**  
 - GitHub: [PARTHKOTADIYAA](https://github.com/PARTHKOTADIYAA)
 
 
