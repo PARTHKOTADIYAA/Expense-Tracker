@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Financial Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-primary {
+            background: #14B8A6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: #0D9488;
+            transform: translateY(-2px);
+        }
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .loading {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #14B8A6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-6">
+    <!-- Header -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-teal-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Expense Tracker</h1>
+                    <p class="text-sm text-gray-500">FINANCIAL INTELLIGENCE</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 px-4 py-2 bg-teal-50 rounded-lg">
+                <div class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+                <span class="text-sm text-teal-700 font-medium">ACTIVE SESSION: DEMO_USER</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="max-w-7xl mx-auto mb-4 hidden">
+        <div class="card p-4 flex items-center gap-3">
+            <div class="loading"></div>
+            <span class="text-gray-600">Loading expenses...</span>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="card p-6">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm text-gray-500 font-medium">TOTAL SPENT</span>
+                <i class="fas fa-dollar-sign text-teal-500"></i>
+            </div>
+            <h2 id="totalSpent" class="text-3xl font-bold text-gray-800">$0.00</h2>
+            <p class="text-xs text-gray-400 mt-1">This month</p>
+        </div>
+
+        <div class="card p-6">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm text-gray-500 font-medium">TRANSACTIONS</span>
+                <i class="fas fa-list text-blue-500"></i>
+            </div>
+            <h2 id="totalTransactions" class="text-3xl font-bold text-gray-800">0</h2>
+            <p class="text-xs text-gray-400 mt-1">Total expenses</p>
+        </div>
+
+        <div class="card p-6">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm text-gray-500 font-medium">AVERAGE</span>
+                <i class="fas fa-chart-bar text-purple-500"></i>
+            </div>
+            <h2 id="avgTransaction" class="text-3xl font-bold text-gray-800">$0.00</h2>
+            <p class="text-xs text-gray-400 mt-1">Per transaction</p>
+        </div>
+
+        <div class="card p-6">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-sm text-gray-500 font-medium">TOP CATEGORY</span>
+                <i class="fas fa-trophy text-orange-500"></i>
+            </div>
+            <h2 id="topCategory" class="text-xl font-bold text-gray-800">-</h2>
+            <p class="text-xs text-gray-400 mt-1" id="topCategoryAmount">$0.00</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Recent Transactions -->
+        <div class="lg:col-span-2">
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Recent Transactions</h3>
+                        <p class="text-sm text-gray-500">Insights from your latest spending</p>
+                    </div>
+                    <button onclick="openAddExpenseModal()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Add Expense
+                    </button>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+                    <button onclick="filterCategory('All')" class="category-filter px-4 py-2 rounded-full bg-teal-500 text-white text-sm font-medium" data-category="All">
+                        All
+                    </button>
+                    <button onclick="filterCategory('Food')" class="category-filter px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200" data-category="Food">
+                        <i class="fas fa-utensils mr-1"></i>Food
+                    </button>
+                    <button onclick="filterCategory('Transportation')" class="category-filter px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200" data-category="Transportation">
+                        <i class="fas fa-car mr-1"></i>Transportation
+                    </button>
+                    <button onclick="filterCategory('Shopping')" class="category-filter px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200" data-category="Shopping">
+                        <i class="fas fa-shopping-bag mr-1"></i>Shopping
+                    </button>
+                    <button onclick="filterCategory('Entertainment')" class="category-filter px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200" data-category="Entertainment">
+                        <i class="fas fa-film mr-1"></i>Entertainment
+                    </button>
+                    <button onclick="filterCategory('Utilities')" class="category-filter px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200" data-category="Utilities">
+                        <i class="fas fa-bolt mr-1"></i>Utilities
+                    </button>
+                </div>
+
+                <!-- Expenses Table -->
+                <div id="expensesList">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Spending Breakdown -->
+        <div class="lg:col-span-1">
+            <div class="card p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">Spending Breakdown</h3>
+                <div id="categoryBreakdown">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div id="addExpenseModal" class="modal">
+        <div class="card p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">Add New Expense</h3>
+                <button onclick="closeAddExpenseModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="addExpenseForm" onsubmit="addExpense(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select id="category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                        <option value="Food">🍴 Food</option>
+                        <option value="Transportation">🚗 Transportation</option>
+                        <option value="Shopping">🛍️ Shopping</option>
+                        <option value="Entertainment">🎬 Entertainment</option>
+                        <option value="Utilities">⚡ Utilities</option>
+                        <option value="Health">💊 Health</option>
+                        <option value="Other">📌 Other</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount ($)</label>
+                    <input type="number" id="amount" step="0.01" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="25.50">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <input type="text" id="description" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="Lunch at cafe">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                    <input type="date" id="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeAddExpenseModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 btn-primary">
+                        <i class="fas fa-check mr-2"></i>Add Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

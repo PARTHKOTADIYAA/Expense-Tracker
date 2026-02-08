@@ -36,8 +36,11 @@ public class GetExpensesHandler implements RequestHandler<APIGatewayProxyRequest
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", "application/json");
-        response.setHeaders(headers);
+headers.put("Content-Type", "application/json");
+headers.put("Access-Control-Allow-Origin", "*");
+headers.put("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+headers.put("Access-Control-Allow-Headers", "Content-Type");
+response.setHeaders(headers);
 
         try {
             // Get userId from path parameters
